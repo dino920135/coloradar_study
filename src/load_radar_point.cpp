@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <iomanip>
 
 #include <ros/ros.h>
 #include <rosbag/bag.h>
@@ -21,6 +20,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "nav_fusion");
 	ros::NodeHandle n("~");
+    // Fixme: Callback function were moved into class
     ros::Subscriber sub_RScan = n.subscribe("/mmWaveDataHdl/RScan", 100, RScan_callback);
     ros::spin();
 
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 {
     rosbag::Bag bag;
     cout << "Opening bagfile ......";
-    bag.open("/home/point001/TS/Coloradar/outdoors_run1.bag", rosbag::bagmode::Read);
+    bag.open("/home/point001/TS/Coloradar/outdoors_run9.bag", rosbag::bagmode::Read);
     cout << " Done." << endl;
 
     std::vector<std::string> topics;
@@ -62,8 +62,16 @@ int main(int argc, char** argv)
             TsRadarCore->RScan_callback(pc_msg);
             
             // Tranform to DG pointcloud by Ground Truth pose
-            pcl::transformPointCloud (TsRadarCore->RscanMem.cloud, TsRadarCore->RscanMem.cloud, TsRadarCore->RscanMem.trans_nb);
+            pcl::transformPointCloud (TsRadarCore->RscanMem.cloud, TsRadarCore->RscanMem.cloud,
+                                        TsRadarCore->RscanMem.trans_nb);
             *TsRadarCore->pclViewerMem.cloudDg += TsRadarCore->RscanMem.cloud;
+
+            // Visualizing Current Cloud
+            copyPointCloud( TsRadarCore->RscanMem.cloud, *TsRadarCore->pclViewerMem.cloudCur);
+            int32_t rgb = ( static_cast<uint32_t>(0) << 16 
+                            | static_cast<uint32_t>(255) << 8 
+                            | static_cast<uint32_t>(255));    // Add Color
+            for(auto &p: TsRadarCore->pclViewerMem.cloudCur->points) p.rgb=rgb;
 
             // string pcd_path = "../../PCD/" + to_string(msg->header.stamp.toNSec()) + ".pcd";
             // SavePCD(cloud, pcd_path);
@@ -76,6 +84,7 @@ int main(int argc, char** argv)
             // Wait for last pcl viewer rendering
             TsRadarCore->pclThreadVis_wait();
 
+            // Store nav_msgs::Odometry to 
             TsRadarCore->Ground_truth_callback(gt_msg);
             pcl::PointXYZRGB pose;
             pose.x = TsRadarCore->RscanMem.trans_nb(0, 3);
@@ -98,6 +107,7 @@ int main(int argc, char** argv)
 
     TsRadarCore->pclThreadVis_wait();
     // hold viewer
+    cout << "Hold at end of file for visualizing (ctrl+c to close)" << endl;
     while (1)
         TsRadarCore->pclViewerMem.viewer->spin();
     

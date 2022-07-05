@@ -10,11 +10,9 @@
 #include "Eigen/src/Core/Matrix.h"
 #include "Eigen/src/Geometry/Quaternion.h"
 
-// #include "pcl/impl/point_types.hpp"
 #include "pcl/point_cloud.h"
 #include "pcl/io/pcd_io.h"
 #include <pcl/visualization/pcl_visualizer.h>
-// #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/common/transforms.h>
 
 #include <thread>
@@ -25,19 +23,18 @@ namespace TsRadar
     {
         typedef struct RscanMemory
         {
-            Eigen::Matrix4f pose; // Rotation & Translation in one Homogenious form
-            Eigen::Quaterniond q_nb;
-            Eigen::Matrix3d C_nb;
-            Eigen::Matrix4f trans_nb;
+            Eigen::Quaterniond q_nb; // Rotation in Quoternion
+            Eigen::Matrix3d C_nb; // Rotation in DCM
+            Eigen::Matrix4f trans_nb; // Rotation & Translation in one Homogenious form
             Eigen::Vector3f position;
 
-            pcl::PointCloud<pcl::PointXYZI> cloud;
+            pcl::PointCloud<pcl::PointXYZI> cloud; // Current PointCloud from 
 
         } RscanMemoryStruct, *RscanMemoryStructPtr;
 
         typedef struct pclViwerMemory
         {
-            pcl::PointCloud<pcl::PointXYZI>::Ptr cloud;
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudCur;
             pcl::PointCloud<pcl::PointXYZI>::Ptr cloudDg;
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPose;
 
